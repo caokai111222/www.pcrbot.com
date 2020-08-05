@@ -1,0 +1,51 @@
+yobot jjc查询发送图片
+使用方法：
+1：在yobot/src/client/yobot_data/output/resource/icon/unit目录下，新建一个白底图片base.jpg，尺寸大于400*80像素； 
+2：yobot教程下载的图片库，似乎毛二力的105331jpg缺失，1053这张图大小0打不开，所以建议去资源站补充一张。（地址依旧是yobot/src/client/yobot_data/output/resource/icon/unit）
+3：yobot/src/client/ybplugins下面jjc_consult.py文件修改。
+修改内容：
+1：导包：
+import urllib.request
+from PIL import Image
+from io import StringIO
+2：新增方法
+ def jjcimgconcat(self,result,reply):
+        base_img = Image.open(os.path.join(self.output_foler, 'resource/icon/unit/base.jpg'))
+        num = 5;
+        if len(result)<num:
+            num = len(result);
+        for idx in range(0,num):
+            team = result[idx];
+            i = 0;
+            fileName = '';
+            for img in team.team:
+                fileName += str(img.char_id);
+                fileName += '_';
+            fileName += '.jpg';
+            if os.path.exists(os.path.join(self.output_foler,fileName)):
+                reply += "[CQ:image,file={}]".format(os.path.join(self.output_foler, fileName));
+                reply += "点赞数:{}，反对数:{},更新时间:{}".format(str(team.good),str(team.bad),str(team.time));
+            else:
+                try:
+                    for img in team.team:
+                        img = Image.open(os.path.join(self.output_foler, 'resource/icon/unit/{}31.jpg'.format(img.char_id)))
+                        img = img.resize((80,80))
+                        base_img.paste(img, [i*80,0]);
+                        i=i+1
+                    #fileName = '{}.jpg'.format(self.output_num, random.randint(0, 999));
+                    base_img.save(os.path.join(self.output_foler, fileName));
+                    reply += "[CQ:image,file={}]".format(os.path.join(self.output_foler, fileName));
+                    reply += "点赞数:{}，反对数:{},更新时间:{}".format(str(team.good),str(team.bad),str(team.time));
+                except IOError:
+                    print("Error: 没有找到文件或读取文件失败")
+        return reply;
+        
+3：调用：
+找到jjcsearch_async方法和调用这个方法的地方，加入一个传参msg
+在jjcsearch_async方法的最后，
+        return reply;
+        之前
+        修改为
+ if "group_id" in msg:
+            reply = self.jjcimgconcat(result,reply);
+        return reply;
